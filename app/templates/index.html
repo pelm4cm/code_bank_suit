@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Коды из Банков</title>
+    <link href="{{ url_for('static', path='/css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Последние СМС</h1>
+        <table class="sms-table">
+            <thead>
+                <tr>
+                    <th>Время (UTC)</th>
+                    <th>Отправитель</th>
+                    <th>Текст сообщения</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for msg in messages %}
+                <tr>
+                    <td class="timestamp">{{ msg.received_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td class="sender">{{ msg.sender }}</td>
+                    <td class="text">{{ msg.text }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3">Сообщений пока нет.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. Определяем, какой протокол использовать (ws:// или wss:// для HTTPS)
+        const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+        
+        // 2. Создаем WebSocket соединение
+        const websocket = new WebSocket(wsUrl);
+
+        websocket.onopen = function(event) {
+            console.log("WebSocket соединение установлено.");
+        };
+
+        // 3. Обработчик входящих сообщений от сервера
+        websocket.onmessage = function(event) {
+            console.log("Получено сообщение от сервера:", event.data);
+
+            // Находим тело таблицы
+            const tableBody = document.querySelector(".sms-table tbody");
+            
+            // Вставляем новую HTML-строку (полученную от сервера) в начало таблицы
+            tableBody.insertAdjacentHTML('afterbegin', event.data);
+        };
+
+        websocket.onclose = function(event) {
+            console.log("WebSocket соединение закрыто. Попытка переподключения через 3 секунды.");
+            // Простое переподключение в случае обрыва
+            setTimeout(function() {
+                window.location.reload();
+            }, 3000);
+        };
+
+        websocket.onerror = function(error) {
+            console.error("Ошибка WebSocket:", error);
+        };
+    });
+</script>
+</body>
+</html>
