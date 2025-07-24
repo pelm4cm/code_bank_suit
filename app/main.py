@@ -1,4 +1,5 @@
 import secrets
+import logging  # <-- Добавьте этот импорт в начало файла
 
 import os
 import datetime
@@ -19,6 +20,11 @@ from dotenv import load_dotenv
 # Локальные импорты из вашего проекта
 from . import crud, models, schemas
 from .database import SessionLocal, engine
+
+
+# Настроим логирование, чтобы оно точно выводилось
+logging.basicConfig(level=logging.INFO)
+
 
 # -------------------- 1. ИНИЦИАЛИЗАЦИЯ И НАСТРОЙКА --------------------
 
@@ -149,5 +155,15 @@ async def verify_api_key(x_api_key: str = Header(None)):
     print(f"--- DEBUG: Expected API_SECRET_KEY on server: '{API_SECRET_KEY}'")
     
     # Используем compare_digest для безопасного сравнения
+    if not (API_SECRET_KEY and x_api_key and secrets.compare_digest(x_api_key, API_SECRET_KEY)):
+        raise HTTPException(status_code=401, detail="Invalid API Key")
+    
+    
+# Зависимость для проверки API-ключа для эндпоинта /api/sms
+async def verify_api_key(x_api_key: str = Header(None)):
+    # Используем логгер вместо print
+    logging.info(f"--- DEBUG: Received 'x-api-key' header: '{x_api_key}'")
+    logging.info(f"--- DEBUG: Expected API_SECRET_KEY on server: '{API_SECRET_KEY}'")
+    
     if not (API_SECRET_KEY and x_api_key and secrets.compare_digest(x_api_key, API_SECRET_KEY)):
         raise HTTPException(status_code=401, detail="Invalid API Key")
