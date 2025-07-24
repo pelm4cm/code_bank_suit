@@ -1,3 +1,4 @@
+import secrets
 
 import os
 import datetime
@@ -141,3 +142,12 @@ def read_root(request: Request, db: Session = Depends(get_db)):
         "index.html", 
         {"request": request, "messages": messages}
     )
+
+# Зависимость для проверки API-ключа для эндпоинта /api/sms
+async def verify_api_key(x_api_key: str = Header(None)):
+    print(f"--- DEBUG: Received 'x-api-key' header: '{x_api_key}'")
+    print(f"--- DEBUG: Expected API_SECRET_KEY on server: '{API_SECRET_KEY}'")
+    
+    # Используем compare_digest для безопасного сравнения
+    if not (API_SECRET_KEY and x_api_key and secrets.compare_digest(x_api_key, API_SECRET_KEY)):
+        raise HTTPException(status_code=401, detail="Invalid API Key")
