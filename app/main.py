@@ -149,6 +149,14 @@ def read_root(request: Request, db: Session = Depends(get_db)):
         {"request": request, "messages": messages}
     )
 
+@app.get("/health", status_code=200)
+def health_check():
+    """
+    Простой эндпоинт для проверки "здоровья" сервиса.
+    Всегда отвечает 200 OK. Не требует аутентификации.
+    """
+    return {"status": "ok"}
+
 # Зависимость для проверки API-ключа для эндпоинта /api/sms
 async def verify_api_key(x_api_key: str = Header(None)):
     print(f"--- DEBUG: Received 'x-api-key' header: '{x_api_key}'")
@@ -158,7 +166,7 @@ async def verify_api_key(x_api_key: str = Header(None)):
     if not (API_SECRET_KEY and x_api_key and secrets.compare_digest(x_api_key, API_SECRET_KEY)):
         raise HTTPException(status_code=401, detail="Invalid API Key")
     
-    
+
 # Зависимость для проверки API-ключа для эндпоинта /api/sms
 async def verify_api_key(x_api_key: str = Header(None)):
     # Используем логгер вместо print
