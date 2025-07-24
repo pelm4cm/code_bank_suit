@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 from . import crud, models, schemas
 from .database import SessionLocal, engine
 
-
+logger = logging.getLogger("uvicorn.error")
 # Настроим логирование, чтобы оно точно выводилось
 logging.basicConfig(level=logging.INFO)
 
@@ -173,5 +173,12 @@ async def verify_api_key(x_api_key: str = Header(None)):
     logging.info(f"--- DEBUG: Received 'x-api-key' header: '{x_api_key}'")
     logging.info(f"--- DEBUG: Expected API_SECRET_KEY on server: '{API_SECRET_KEY}'")
     
+    if not (API_SECRET_KEY and x_api_key and secrets.compare_digest(x_api_key, API_SECRET_KEY)):
+        raise HTTPException(status_code=401, detail="Invalid API Key")
+    
+
+async def verify_api_key(x_api_key: str = Header(None)):
+    logger.info(f"--- DEBUG: Received 'x-api-key' header: '{x_api_key}'")
+    logger.info(f"--- DEBUG: Expected API_SECRET_KEY on server: '{API_SECRET_KEY}'")
     if not (API_SECRET_KEY and x_api_key and secrets.compare_digest(x_api_key, API_SECRET_KEY)):
         raise HTTPException(status_code=401, detail="Invalid API Key")
