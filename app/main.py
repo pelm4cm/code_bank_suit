@@ -18,8 +18,10 @@ from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
 # Локальные импорты из вашего проекта
-from . import crud, models, schemas
-from .database import SessionLocal, engine
+import crud
+import models
+import schemas
+from database import SessionLocal, engine
 
 logger = logging.getLogger("uvicorn.error")
 # Настроим логирование, чтобы оно точно выводилось
@@ -34,15 +36,15 @@ models.Base.metadata.create_all(bind=engine)
 # Загружаем переменные из файла .env (или key.env)
 # Если ваш файл называется key.env, используйте: load_dotenv(dotenv_path="key.env")
 load_dotenv()
-API_SECRET_KEY = os.getenv("API_SECRET_KEY")
-SITE_USERNAME = os.getenv("SITE_USERNAME")
-SITE_PASSWORD = os.getenv("SITE_PASSWORD")
+#API_SECRET_KEY = os.getenv("API_SECRET_KEY")
+#SITE_USERNAME = os.getenv("SITE_USERNAME")
+#SITE_PASSWORD = os.getenv("SITE_PASSWORD")
 
 # Проверяем, что секреты загружены (опционально, но полезно для отладки)
-if not API_SECRET_KEY:
-    print("!!! ВНИМАНИЕ: Секретный ключ API_SECRET_KEY не найден. API будет незащищенным. !!!")
-if not (SITE_USERNAME and SITE_PASSWORD):
-    print("!!! ВНИМАНИЕ: Логин/пароль для сайта не найдены. Аутентификация не будет работать. !!!")
+#if not API_SECRET_KEY:
+   # print("!!! ВНИМАНИЕ: Секретный ключ API_SECRET_KEY не найден. API будет незащищенным. !!!")
+#if not (SITE_USERNAME and SITE_PASSWORD):
+   # print("!!! ВНИМАНИЕ: Логин/пароль для сайта не найдены. Аутентификация не будет работать. !!!")
 
 # Создаем главный экземпляр приложения FastAPI
 app = FastAPI(title="SMS Viewer")
@@ -53,8 +55,8 @@ security = HTTPBasic()
 
 # -------------------- 2. НАСТРОЙКА СТАТИКИ И ШАБЛОНОВ --------------------
 
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 
 # -------------------- 3. МЕНЕДЖЕР WEBSOCKET СОЕДИНЕНИЙ --------------------
@@ -137,7 +139,7 @@ async def add_new_sms(sms: schemas.SmsCreate, db: Session = Depends(get_db)):
 
 
 # Этот эндпоинт теперь защищен аутентификацией
-@app.get("/", response_class=HTMLResponse, dependencies=[Depends(verify_site_credentials)])
+@app.get("/login", response_class=HTMLResponse)
 def read_root(request: Request, db: Session = Depends(get_db)):
     """
     Отображает главную страницу со списком СМС.
@@ -182,3 +184,8 @@ async def verify_api_key(x_api_key: str = Header(None)):
     logger.info(f"--- DEBUG: Expected API_SECRET_KEY on server: '{API_SECRET_KEY}'")
     if not (API_SECRET_KEY and x_api_key and secrets.compare_digest(x_api_key, API_SECRET_KEY)):
         raise HTTPException(status_code=401, detail="Invalid API Key")
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    # Эта функция будет вызываться, когда кто-то заходит на главную страницу
+    return templates.TemplateResponse("index.html", {"request": request})

@@ -17,5 +17,6 @@ class Sms(SmsBase):
     received_at: datetime.datetime
 
     # Позволяет Pydantic работать с объектами SQLAlchemy напрямую
-    class Config:
-        orm_mode = True
+class Config:
+    from_attributes = True
+

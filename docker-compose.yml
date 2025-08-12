@@ -1,13 +1,25 @@
+
+
 services:
-  nginx:
-    image: nginx:latest
-    ports:
-     - "80:80"
+  # Сервис с Python-приложением
+  web:
+    build: . # Собрать образ из Dockerfile в текущей папке
+    container_name: my_fastapi_app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 # Команда запуска
     volumes:
-     - './nginx.conf:/etc/nginx/nginx.conf'
+      - ./app:/app # Связываем папку app с папкой /app внутри контейнера
+    expose:
+      - 8000 # Открываем порт 8000 для связи с другими контейнерами (Nginx)
+    restart: unless-stopped
 
-  app:
-    build:
-      context: ./app
-
-    
+  # Сервис с Nginx как Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: my_site_nginx
+    ports:
+      - "80:80" # Этот порт смотрит в интернет
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf # Подключаем наш конфиг Nginx
+    depends_on:
+      - web # Nginx запустится только после того, как запустится сервис web
+    restart: unless-stopped

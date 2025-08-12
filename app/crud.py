@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from . import models, schemas
+import models, schemas
 
 # Функция для создания (Create) нового СМС в базе
 def create_sms(db: Session, sms: schemas.SmsCreate):
